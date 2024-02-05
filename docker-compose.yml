@@ -1,16 +1,14 @@
 version: '3'
 services:
     nodejs:
-        build:
-            context: .dist
-            dockerfile: Dockerfile
-        image: nodejs
+        image: nexus_backend
         container_name: backend_nexus
         restart: unless-stopped
         env_file: .env
-        volumes:
-            - .:/home/node/app
-            - node_modules:/home/node/app/node_modules
+        ports:
+            - '3030:3000'
+        links:
+            - postgres
     postgres:
         image: postgres:latest
         container_name: postgres

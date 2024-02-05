@@ -23,7 +23,40 @@ declare global {
 	}
 }
 
-app.use(dbMiddleware);
+const connection = new DataSource({
+	type: 'postgres',
+	host: process.env.POSTGRES_HOST,
+	port: Number(process.env.POSTGRES_PORT) || 6500,
+	username: process.env.POSTGRES_USER,
+	password: process.env.POSTGRES_PASSWORD,
+	database: process.env.POSTGRES_DB,
+	synchronize: true,
+	logging: true,
+	entities: [__dirname + '/../**/*.entity.{js,ts}'],
+});
+
+connection
+	.initialize()
+	.then(async () => {
+		console.log('Connection initialized with database...');
+	})
+	.catch((error) => console.log(error));
+
+const getDataSource = (delay = 3000): Promise<DataSource> => {
+	if (connection.isInitialized) return Promise.resolve(connection);
+
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			if (connection.isInitialized) resolve(connection);
+			else reject('Failed to create connection with database');
+		}, delay);
+	});
+};
+
+// app.use(dbMiddleware);
+app.use(async (req, res) => {
+	req.db = await getDataSource();
+});
 app.use(errorMiddleware);
 app.use(json());
 app.use(cookieParser());
